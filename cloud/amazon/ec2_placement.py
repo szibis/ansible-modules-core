@@ -19,7 +19,8 @@ DOCUMENTATION = '''
 module: ec2_placement
 short_description: create, remove or list placement group(s) in EC2.
 description:
-    - Creates, removes and lists placement groups in EC2. This module has a dependency on python-boto.
+    - Creates, removes and lists placement groups in EC2.
+      This module has a dependency on python-boto.
 version_added: "2.0"
 options:
   name:
@@ -27,21 +28,20 @@ options:
       - The EC2 placement group name.
     required: False
     default: null
-    aliases: []
   strategy:
     description:
-      - The placement strategy of the new placement group. Currently, the only acceptable value is cluster
-      required: false
+      - The placement strategy of the new placement group.
+        Currently, the only acceptable value is cluster
+    required: false
     default: cluster
     choices: ['cluster']
-    aliases: []
   state:
     description:
-      - Whether the placement group should be present or absent. Use list to show all or search specific placement group.
+      - Whether the placement group should be present or absent.
+        Use list to show all or search specific placement group.
     required: false
     default: present
     choices: ['present', 'absent', 'list']
-    aliases: []
   region:
     description:
       - region in which the resource exists.
@@ -98,11 +98,15 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name = dict(required=False),
-            strategy = dict(default='cluster', choices=['cluster']),
-            state = dict(default='present', choices=['present', 'absent', 'list']),
-        )
-    )
+                         name=dict(required=False),
+                         strategy=dict(default='cluster',
+                                       choices=['cluster']
+                                       ),
+                         state=dict(default='present',
+                                    choices=['present', 'absent', 'list']
+                                    )
+                            )
+                        )
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
@@ -113,15 +117,15 @@ def main():
     state = module.params.get('state')
 
     if not isinstance(name, basestring) and name:
-       module.fail_json(msg="name argument must be string")
+        module.fail_json(msg="name argument must be string")
 
     ec2 = ec2_connect(module)
 
-    filters = {'group-name' : name}
+    filters = {'group-name': name}
     if name:
-       getplacements = ec2.get_all_placement_groups(filters=filters)
+        getplacements = ec2.get_all_placement_groups(filters=filters)
     else:
-       getplacements = ec2.get_all_placement_groups()
+        getplacements = ec2.get_all_placement_groups()
 
     placelist = []
 
@@ -130,25 +134,30 @@ def main():
 
     if state == 'present':
         if not name:
-            module.fail_json(msg="name argument is required when state is present")
+            module.fail_json(msg="name argument is required when state is \
+                             present")
         if name in placelist:
-            module.exit_json(msg="Placement group already exists with name %s." %name, changed=False)
+            module.exit_json(msg="Placement group already exists with name \
+                             %s." % name, changed=False)
         else:
-             placer = ec2.create_placement_group(name)
-        module.exit_json(msg="Placement group %s created." % (name), changed=True)
+            placer = ec2.create_placement_group(name)
+        module.exit_json(msg="Placement group %s created." % name,
+                         changed=True)
 
     if state == 'absent':
         if not name:
-            module.fail_json(msg="name argument is required when state is absent")
+            module.fail_json(msg="name argument is required when state is \
+                             absent")
         if name not in placelist:
-            module.exit_json(msg="Placement group with name %s not exist. Nothing to remove." %name, changed=False)
+            module.exit_json(msg="Placement group with name %s not exist. \
+                             Nothing to remove." % name, changed=False)
         else:
-             placer = ec2.delete_placement_group(name)
-        module.exit_json(msg="Placement group %s removed." % name, changed=True)
+            placer = ec2.delete_placement_group(name)
+        module.exit_json(msg="Placement group %s removed." % name,
+                         changed=True)
 
     if state == 'list':
         module.exit_json(changed=False, placement_groups=placelist)
-    sys.exit(0)
 
 # import module snippets
 from ansible.module_utils.basic import *
