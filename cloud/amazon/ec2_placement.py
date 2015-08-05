@@ -32,20 +32,20 @@ options:
     description:
       - The placement strategy of the new placement group.
         Currently, the only acceptable value is cluster
-    required: false
+    required: False
     default: cluster
     choices: ['cluster']
   state:
     description:
       - Whether the placement group should be present or absent.
         Use list to show all or search specific placement group.
-    required: false
+    required: False
     default: present
     choices: ['present', 'absent', 'list']
   region:
     description:
       - region in which the resource exists.
-    required: false
+    required: False
     default: null
     aliases: ['aws_region', 'ec2_region']
 
@@ -88,7 +88,7 @@ tasks:
 
 RETURN = '''
 name:
-    description: Name given to the placement group.
+    description: Name given to the placement group or list of groups.
     returned: success
     type: string
 strategy:
@@ -157,7 +157,7 @@ def main():
         module.exit_json(msg="Placement group %s removed." % name, name=name, strategy=strategy, changed=True)
 
     if state == 'list':
-        module.exit_json(msg="List of all placement groups.", placement_groups=placelist, changed=False)
+        module.exit_json(msg="List of all placement groups.", name=placelist, strategy=strategy, changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *
