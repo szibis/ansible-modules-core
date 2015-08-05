@@ -86,6 +86,17 @@ tasks:
       region: "us-east-1"
 '''
 
+RETURN = '''
+name:
+    description: Name given to the placement group.
+    returned: success
+    type: string
+strategy:
+    description: The placement strategy of the new placement group.
+    returned: success
+    type: string
+'''
+
 import sys
 
 try:
@@ -98,15 +109,11 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-                         name=dict(required=False),
-                         strategy=dict(default='cluster',
-                                       choices=['cluster']
-                                       ),
-                         state=dict(default='present',
-                                    choices=['present', 'absent', 'list']
-                                    )
-                            )
-                        )
+                name=dict(required=False, type='str'),
+                strategy=dict(default='cluster', choices=['cluster']),
+                state=dict(default='present', choices=['present', 'absent', 'list'])
+                )
+            )
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
@@ -121,43 +128,36 @@ def main():
 
     ec2 = ec2_connect(module)
 
-    filters = {'group-name': name}
     if name:
-        getplacements = ec2.get_all_placement_groups(filters=filters)
+        getplacements = ec2.get_all_placement_groups(filters={'group-name': name})
     else:
         getplacements = ec2.get_all_placement_groups()
 
     placelist = []
 
-    for placement in getplacements:
-        placelist.append(placement.name)
+    placelist = [placement.name for placement in getplacements]
 
     if state == 'present':
         if not name:
-            module.fail_json(msg="name argument is required when state is \
-                             present")
+            module.fail_json(msg="name argument is required when state is present")
         if name in placelist:
-            module.exit_json(msg="Placement group already exists with name \
-                             %s." % name, changed=False)
+            module.exit_json(msg="Placement group already exists with name %s." % name, name=name, strategy=strategy, changed=False)
         else:
             placer = ec2.create_placement_group(name)
-        module.exit_json(msg="Placement group %s created." % name,
-                         changed=True)
+        module.exit_json(msg="Placement group %s created." % name, name=name, strategy=strategy, changed=True)
 
     if state == 'absent':
         if not name:
-            module.fail_json(msg="name argument is required when state is \
-                             absent")
+            module.fail_json(msg="name argument is required when state is absent")
         if name not in placelist:
             module.exit_json(msg="Placement group with name %s not exist. \
-                             Nothing to remove." % name, changed=False)
+                             Nothing to remove." % name, name=name, strategy=strategy, changed=False)
         else:
             placer = ec2.delete_placement_group(name)
-        module.exit_json(msg="Placement group %s removed." % name,
-                         changed=True)
+        module.exit_json(msg="Placement group %s removed." % name, name=name, strategy=strategy, changed=True)
 
     if state == 'list':
-        module.exit_json(changed=False, placement_groups=placelist)
+        module.exit_json(msg="List of all placement groups.", placement_groups=placelist, changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *
